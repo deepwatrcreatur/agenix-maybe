@@ -17,51 +17,31 @@ let
     (name: secret: !builtins.pathExists secret.file)
     cfg.maybeSecrets;
 
-  # Secret options (mirrors agenix's secretType)
-  secretOptions = { name, ... }: {
+  # INVARIANT: options left unset are null and are dropped before reaching
+  # age.secrets, so agenix's own defaults apply (path under age.secretsDir,
+  # group = owner's primary group). Hard-coding defaults here diverged from them.
+  optional = type: description: mkOption {
+    type = types.nullOr type;
+    default = null;
+    description = "${description} Unset (null) uses agenix's default.";
+  };
+
+  secretOptions = { ... }: {
     options = {
       file = mkOption {
         type = types.path;
         description = "Path to the age-encrypted file.";
       };
-
-      path = mkOption {
-        type = types.str;
-        default = "/run/agenix/${name}";
-        description = "Path where the decrypted secret will be placed.";
-      };
-
-      mode = mkOption {
-        type = types.str;
-        default = "0400";
-        description = "File mode for the decrypted secret.";
-      };
-
-      owner = mkOption {
-        type = types.str;
-        default = "root";
-        description = "Owner of the decrypted secret.";
-      };
-
-      group = mkOption {
-        type = types.str;
-        default = "root";
-        description = "Group of the decrypted secret.";
-      };
-
-      name = mkOption {
-        type = types.str;
-        default = name;
-        description = "Name of the secret.";
-      };
-
-      symlink = mkOption {
-        type = types.bool;
-        default = true;
-        description = "Whether to create a symlink to the secret.";
-      };
+      path = optional types.str "Path where the decrypted secret will be placed.";
+      mode = optional types.str "File mode for the decrypted secret.";
+      owner = optional types.str "Owner of the decrypted secret.";
+      group = optional types.str "Group of the decrypted secret.";
+      name = optional types.str "Name of the secret.";
+      symlink = optional types.bool "Whether to create a symlink to the secret.";
     };
   };
+
+  toAgenix = secret: filterAttrs (_: v: v != null) secret;
 in
 {
   options.age = {
@@ -92,7 +72,7 @@ in
 
   config = mkIf (cfg.maybeSecrets != { }) {
     # Pass existing secrets through to agenix's age.secrets
-    age.secrets = existingSecrets;
+    age.secrets = mapAttrs (_: toAgenix) existingSecrets;
 
     # Emit warnings for skipped secrets
     warnings = optionals cfg.warnOnSkippedSecrets (

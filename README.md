@@ -58,11 +58,17 @@ If the file exists, it's passed to `age.secrets`. If not, it's silently skipped 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `age.maybeSecrets.<name>.file` | path | required | Path to the `.age` file |
-| `age.maybeSecrets.<name>.path` | string | `/run/agenix/<name>` | Decrypted secret location |
-| `age.maybeSecrets.<name>.owner` | string | `"root"` | File owner |
-| `age.maybeSecrets.<name>.group` | string | `"root"` | File group |
-| `age.maybeSecrets.<name>.mode` | string | `"0400"` | File permissions |
+| `age.maybeSecrets.<name>.path` | string or null | agenix default (`<age.secretsDir>/<name>`) | Decrypted secret location |
+| `age.maybeSecrets.<name>.owner` | string or null | agenix default (root) | File owner |
+| `age.maybeSecrets.<name>.group` | string or null | agenix default (owner's primary group) | File group |
+| `age.maybeSecrets.<name>.mode` | string or null | agenix default (`"0400"`) | File permissions |
+| `age.maybeSecrets.<name>.symlink` | bool or null | agenix default (`true`) | Symlink from `path` into the generation directory |
 | `age.warnOnSkippedSecrets` | bool | `true` | Emit warnings for missing secrets |
+
+Options left unset are not passed to `age.secrets`, so they behave exactly as in
+plain agenix. Before this, `path` was hard-coded to `/run/agenix/<name>` and
+`group` to `root`; if you relied on `group = "root"` with an `owner` whose
+primary group is different, set `group = "root"` explicitly.
 
 ### Library Functions
 

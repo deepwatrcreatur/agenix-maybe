@@ -4,14 +4,13 @@ Library and NixOS module that declares agenix secrets only when their `.age`
 file exists, so evaluation does not fail on hosts that lack a secret.
 
 - Code: `modules/nixos.nix`; exported through `lib` and `nixosModules` in `flake.nix`.
-- There is nothing to build (no packages or checks). Validate with
-  `nix flake check` and by evaluating a NixOS config that uses the module with
-  one present and one missing `.age` file.
+- There are no packages. `nix flake check` runs `checks.<system>.module-eval`,
+  which evaluates the module against a stub `age.secrets` with one present
+  and one missing file (`tests/`). Extend it when changing behaviour.
 - Invariant for edits: a missing file must skip the secret, never fail
   evaluation; a present file should behave like plain agenix.
-- Known gaps from plain agenix: `path` defaults to `/run/agenix/<name>` even
-  when `age.secretsDir` is changed, and `group` defaults to `root` instead of
-  following `owner`. Fixes should come with an eval check.
+- Unset options are `null` and are dropped before reaching `age.secrets`, so
+  agenix's defaults apply. Do not add hard-coded defaults to the submodule.
 
 <!-- nix-agent-guides:core BEGIN (v3). Synced from deepwatrcreatur/nix-agent-guides templates/agents-core.md by scripts/sync-agents-core.sh. Edit it there, not here. -->
 ## Shared conventions
