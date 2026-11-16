@@ -15,8 +15,9 @@
         agenix-maybe = import ./modules/nixos.nix;
       };
 
-      # Evaluates the module against a stub of agenix's age.secrets option and
-      # asserts unset options are not passed through (so agenix defaults win).
+      # WHY: a stub age.secrets that keeps every attribute makes a forwarded
+      # null (which would override agenix's defaults) visible, without adding
+      # agenix as a flake input that every consumer would then lock.
       checks = lib.genAttrs [ "x86_64-linux" "aarch64-linux" ] (system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
