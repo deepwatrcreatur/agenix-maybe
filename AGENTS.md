@@ -4,10 +4,14 @@ Library and NixOS module that declares agenix secrets only when their `.age`
 file exists, so evaluation does not fail on hosts that lack a secret.
 
 - Code: `modules/nixos.nix`; exported through `lib` and `nixosModules` in `flake.nix`.
-- Validate: `nix flake check`, and evaluate a NixOS config that uses the module
-  with one present and one missing `.age` file.
+- There is nothing to build (no packages or checks). Validate with
+  `nix flake check` and by evaluating a NixOS config that uses the module with
+  one present and one missing `.age` file.
 - Invariant for edits: a missing file must skip the secret, never fail
-  evaluation; a present file must behave exactly like plain agenix.
+  evaluation; a present file should behave like plain agenix.
+- Known gaps from plain agenix: `path` defaults to `/run/agenix/<name>` even
+  when `age.secretsDir` is changed, and `group` defaults to `root` instead of
+  following `owner`. Fixes should come with an eval check.
 
 <!-- nix-agent-guides:core BEGIN (v3). Synced from deepwatrcreatur/nix-agent-guides templates/agents-core.md by scripts/sync-agents-core.sh. Edit it there, not here. -->
 ## Shared conventions
@@ -26,11 +30,12 @@ Summary (offline fallback):
   three lines above the code they protect; longer reasoning goes in `docs/`
   with a pointer (`# WHY: docs/x.md#heading`). Never narrate the next line.
 - **Before editing a file**, read its tags:
-  `rg -n '# (WHY|GOTCHA|INVARIANT|SECURITY|UPSTREAM|TODO)' <file>`.
+  `grep -nE '# (WHY|GOTCHA|INVARIANT|SECURITY|UPSTREAM|TODO)' <file>`.
   Fix or delete any tag your change makes untrue.
 - **Exported Nix functions** get RFC 145 doc comments (`/** ... */`).
-- **Validate before committing:** the narrowest `nix build` first, then
-  `nix flake check`; read all output. Run `bash -n`/`shellcheck` on shell
+- **Validate before committing:** build the narrowest affected output
+  first (when the flake has packages), then `nix flake check`; read all
+  output. Run `bash -n`/`shellcheck` on shell
   generated from Nix. Exit code 0 is not proof the change worked.
 - **Same change, same PR:** behaviour changes come with docs and a check.
 - **Never commit secrets**, and do not deploy to or change live hosts unless
